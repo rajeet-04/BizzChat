@@ -13,19 +13,19 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://bizchat-backend-production.up.railway.app/api/$1"
+      "destination": "http://52.66.154.194:3000/api/$1"
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "https://bizchat-backend-production.up.railway.app/socket.io/$1"
+      "destination": "http://52.66.154.194:3000/socket.io/$1"
     },
     {
       "source": "/socket.io",
-      "destination": "https://bizchat-backend-production.up.railway.app/socket.io"
+      "destination": "http://52.66.154.194:3000/socket.io"
     },
     {
       "source": "/api",
-      "destination": "https://bizchat-backend-production.up.railway.app/api"
+      "destination": "http://52.66.154.194:3000/api"
     },
     {
       "source": "/(.*)",
