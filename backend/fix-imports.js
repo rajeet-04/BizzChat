@@ -34,13 +34,14 @@ function fixImportsInFile(filePath) {
 
     // Replace relative imports from "./x" to "./x.js" (but not if already has extension)
     // Pattern: from "relative/path" where relative path doesn't have .js or other extension
-    content = content.replace(/from\s+['"](\.[^'"]*?)(['"])/g, (match, importPath, quote) => {
-      // Skip if it already has an extension
+    // This captures: from "path" or from 'path'
+    content = content.replace(/from\s+(['"])(\.[^'"]*?)\1/g, (match, quote, importPath) => {
+      // Skip if it already has an extension (ends with .xxx)
       if (/\.\w+$/.test(importPath)) {
         return match;
       }
-      // Add .js extension
-      return `from "${importPath}.js${quote}`;
+      // Add .js extension, preserving the original quote type
+      return `from ${quote}${importPath}.js${quote}`;
     });
 
     if (content !== originalContent) {
