@@ -9,7 +9,7 @@
  *   pnpm run pm2:stop         # Stop all processes
  */
 
-export default {
+module.exports = {
   apps: [
     {
       name: "bizchat-backend",

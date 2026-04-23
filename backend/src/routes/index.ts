@@ -56,20 +56,24 @@ router.get("/health", async (_req, res) => {
     );
 
     const healthStatus = await Promise.race([healthPromise, timeoutPromise]) as any;
-    res.status(200).json(healthStatus);
+    if (!res.headersSent) {
+      res.status(200).json(healthStatus);
+    }
   } catch (err: any) {
     logger.error({ err }, "Health check failed (timeout or unexpected error)");
     // Return 200 anyway - health endpoint itself is responsive
     // Detailed status may be incomplete but we're still alive
-    res.status(200).json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      services: {
-        database: "ok",
-        ollama: "unreachable",
-      },
-      warning: err?.message ?? "Health check partially timed out",
-    });
+    if (!res.headersSent) {
+      res.status(200).json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        services: {
+          database: "ok",
+          ollama: "unreachable",
+        },
+        warning: err?.message ?? "Health check partially timed out",
+      });
+    }
   }
 });
 
