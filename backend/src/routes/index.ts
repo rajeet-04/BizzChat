@@ -1,19 +1,19 @@
 import { Router, IRouter } from "express";
-import * as orderController from "../controllers/orderController";
-import * as invoiceController from "../controllers/invoiceController";
-import { extractLimiter, generalLimiter } from "../middlewares/rateLimiter";
-import { sanitizeInputs } from "../middlewares/sanitizer";
-import { redactPII } from "../middlewares/piiRedactor";
-import { idempotency } from "../middlewares/idempotency";
-import { firestoreDb } from "../config/firestore";
-import { storage } from "../services/storageService";
-import { env } from "../config/env";
-import { logger } from "../middlewares/logger";
-import { authHandler, requireOrg } from "../middlewares/authHandler";
-import whatsappRoutes from "./whatsappRoutes";
+import * as orderController from "../controllers/orderController.js";
+import * as invoiceController from "../controllers/invoiceController.js";
+import { extractLimiter, generalLimiter } from "../middlewares/rateLimiter.js";
+import { sanitizeInputs } from "../middlewares/sanitizer.js";
+import { redactPII } from "../middlewares/piiRedactor.js";
+import { idempotency } from "../middlewares/idempotency.js";
+import { firestoreDb } from "../config/firestore.js";
+import { storage } from "../services/storageService.js";
+import { env } from "../config/env.js";
+import { logger } from "../middlewares/logger.js";
+import { authHandler, requireOrg } from "../middlewares/authHandler.js";
+import whatsappRoutes from "./whatsappRoutes.js";
 import { randomUUID } from "crypto";
-import * as ollamaService from "../services/ollamaService";
-import * as whatsappService from "../services/whatsappService";
+import * as ollamaService from "../services/ollamaService.js";
+import * as whatsappService from "../services/whatsappService.js";
 
 const router: IRouter = Router();
 

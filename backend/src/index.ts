@@ -1,9 +1,9 @@
 import http from "http";
-import app from "./app";
-import { log, logger } from "./middlewares/logger";
-import { env } from "./config/env";
-import { initSocketServer } from "./services/socketService";
-import { autoReconnectSessions } from "./services/whatsappService";
+import app from "./app.js";
+import { log, logger } from "./middlewares/logger.js";
+import { env } from "./config/env.js";
+import { initSocketServer } from "./services/socketService.js";
+import { autoReconnectSessions } from "./services/whatsappService.js";
 
 const PORT = env.PORT;
 

@@ -1,12 +1,12 @@
-import "./config/env";
+import "./config/env.js";
 import express, { Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import * as Sentry from "@sentry/node";
-import router from "./routes";
-import { requestLogger, correlationId } from "./middlewares/logger";
-import { globalErrorHandler } from "./middlewares/errorHandler";
-import { env } from "./config/env";
+import router from "./routes/index.js";
+import { requestLogger, correlationId } from "./middlewares/logger.js";
+import { globalErrorHandler } from "./middlewares/errorHandler.js";
+import { env } from "./config/env.js";
 
 const app: Express = express();
 
