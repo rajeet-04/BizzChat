@@ -14,13 +14,15 @@ export function initSocketServer(httpServer: HttpServer) {
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
+    "https://bizz-chat-frontend.vercel.app",
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
   ];
 
   io = new SocketServer(httpServer, {
     cors: {
-      origin: "*",   // Auth is token-based — no cookie security risk from wildcard
+      origin: allowedOrigins,
       methods: ["GET", "POST"],
+      credentials: true,
     },
     // Short ping interval so polling requests last ≤8s — safe for Vercel edge proxy
     // (default 25s would exceed proxy timeout, causing ERR_NAME_NOT_RESOLVED loops)
