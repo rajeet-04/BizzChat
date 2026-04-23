@@ -1,0 +1,35 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://bizchat-backend-production.up.railway.app/api/$1"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://bizchat-backend-production.up.railway.app/socket.io/$1"
+    },
+    {
+      "source": "/socket.io",
+      "destination": "https://bizchat-backend-production.up.railway.app/socket.io"
+    },
+    {
+      "source": "/api",
+      "destination": "https://bizchat-backend-production.up.railway.app/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

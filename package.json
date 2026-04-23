@@ -1,0 +1,42 @@
+{
+  "name": "bizchat",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:backend": "pnpm --filter \"./backend\" run dev",
+    "dev:worker": "pnpm --filter \"./backend\" run dev:worker",
+    "dev:frontend": "pnpm --filter \"./frontend\" run dev",
+    "dev": "pnpm --parallel --filter \"./backend\" --filter \"./frontend\" run dev",
+    "build:backend": "pnpm --filter \"./backend\" run build",
+    "build:frontend": "pnpm --filter \"./frontend\" run build",
+    "build": "pnpm run build:backend && pnpm run build:frontend",
+    "test": "pnpm --filter \"./backend\" run test",
+    "install:all": "pnpm install"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "6.3.5",
+      "bullmq>ioredis": "^5.9.3"
+    },
+    "ignoredBuiltDependencies": [
+      "puppeteer"
+    ],
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "@tailwindcss/oxide",
+      "cpu-features",
+      "esbuild",
+      "msgpackr-extract",
+      "protobufjs",
+      "ssh2"
+    ]
+  },
+  "trustedDependencies": [
+    "@firebase/util",
+    "@tailwindcss/oxide",
+    "protobufjs"
+  ]
+}
