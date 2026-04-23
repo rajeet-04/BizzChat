@@ -14,7 +14,8 @@
     "declaration": true,
     "noEmit": false,
     "sourceMap": true,
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "preserveModuleExtensions": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]
