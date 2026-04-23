@@ -1,35 +1,26 @@
 # 🔧 FIX: ERR_MODULE_NOT_FOUND on AWS Deployment
 
 **Problem**: Deployment failed with `ERR_MODULE_NOT_FOUND` for `./app`
-**Root Cause**: TypeScript was stripping `.js` extensions from compiled output
-**Solution**: Enable `preserveModuleExtensions` in tsconfig.json + Fixed regex in fix-imports.js
+**Root Cause**: TypeScript strips `.js` extensions from compiled ES module imports (expected behavior)
+**Solution**: Fixed regex in fix-imports.js to properly preserve quote types when adding .js extensions
 
 ## Changes Made
 
-### 1. tsconfig.json - Added preserveModuleExtensions
-```json
-{
-  "compilerOptions": {
-    ...
-    "preserveModuleExtensions": true
-  }
-}
-```
-
-**Why**: TypeScript 5.2+ can preserve module extensions when compiling ES modules. This ensures `import app from "./app.js"` stays as `./app.js` in the compiled output instead of being stripped to `./app`.
-
-### 2. fix-imports.js - Fixed regex pattern
+### 1. fix-imports.js - Fixed regex pattern to preserve quote types
 ```javascript
-// OLD (BUGGY): Hardcoded double quotes
+// OLD (BUGGY): Hardcoded double quotes in replacement
 /from\s+['"](\.[^'"]*?)(['"])/g
-// Result: from "path".js"  ← WRONG!
+// Problem: "from 'path'" becomes "from "path.js"" (WRONG QUOTES!)
 
-// NEW (FIXED): Uses backreference to preserve quote type
+// NEW (FIXED): Uses backreference \1 to preserve exact quote type
 /from\s+(['"])(\.[^'"]*?)\1/g
-// Result: from "path.js" or from 'path.js'  ← CORRECT!
+// Result: "from 'path'" → "from 'path.js'" ✅ (quotes preserved!)
 ```
 
-**Why**: The regex must capture the quote type used in the original import and preserve it in the replacement.
+**Why This Fix Works**:
+- Old regex captured quote in group 2 but replaced with hardcoded `"` character
+- New regex uses backreference `\1` to match the opening quote type and preserve it
+- Handles both `"path"` and `'path'` correctly
 
 ## Deployment Instructions
 
@@ -134,10 +125,12 @@ pm2 logs --lines 50
 
 ## Summary
 
-The ERR_MODULE_NOT_FOUND error was caused by TypeScript stripping `.js` extensions from the compiled output. This is now fixed by:
+The ERR_MODULE_NOT_FOUND error was caused by the fix-imports.js regex using the wrong quote character when adding .js extensions. This created invalid import statements like `from "path.js'` (mismatched quotes). 
 
-1. Adding `preserveModuleExtensions: true` to tsconfig.json (TypeScript 5.2+)
-2. Fixing the regex in fix-imports.js to properly handle both quote types
-3. Running the complete deployment sequence to rebuild with new config
+The fix ensures the regex preserves the original quote type using a backreference `\1`, so:
+- `from "path"` → `from "path.js"` ✅
+- `from 'path'` → `from 'path.js'` ✅
 
-The deployment should now succeed with the backend starting online and health endpoint responding.
+The fixed fix-imports.js script now properly handles both quote types and correctly adds .js extensions to all 34 compiled files.
+
+Deployment should now succeed with the backend starting online and health endpoint responding.

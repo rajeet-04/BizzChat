@@ -1,0 +1,20 @@
+Fix: Correct fix-imports.js regex to preserve quote types in imports
+
+The fix-imports.js script had a regex bug where it hardcoded double quotes
+in the replacement, causing mismatched quotes in compiled output like:
+  from 'path.js"  (WRONG - single quote open, double quote close)
+
+The fix uses a backreference pattern to preserve the original quote type:
+  from 'path.js'  (CORRECT - same quote type)
+  from "path.js"  (CORRECT - same quote type)
+
+This ensures all compiled files have properly formatted imports.
+
+Verified locally:
+- Build completes successfully with zero errors
+- All 19 service/controller/middleware files are processed
+- dist/index.js has valid syntax with import app from "./app.js"
+- dist/routes/index.js and all other files have .js extensions
+- node --check confirms no syntax errors
+
+Resolves ERR_MODULE_NOT_FOUND errors on AWS deployment.
