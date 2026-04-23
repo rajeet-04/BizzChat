@@ -3,15 +3,30 @@ import app from "./app";
 import { log } from "./middlewares/logger";
 import { env } from "./config/env";
 import { initSocketServer } from "./services/socketService";
-// routes v2 – settings endpoint added
-
-
 import { autoReconnectSessions } from "./services/whatsappService";
 
 const PORT = env.PORT;
 
 const server = http.createServer(app);
 initSocketServer(server);
+
+// Track unhandled errors to restart if needed
+let errorCount = 0;
+const MAX_ERRORS_BEFORE_RESTART = 10;
+
+process.on("uncaughtException", (err) => {
+  log({ err }, "FATAL: Uncaught exception", "error");
+  errorCount++;
+  if (errorCount >= MAX_ERRORS_BEFORE_RESTART) {
+    log("Too many errors, exiting for restart by PM2", "error");
+    process.exit(1);
+  }
+});
+
+process.on("unhandledRejection", (reason) => {
+  log({ reason }, "Unhandled rejection", "error");
+  errorCount++;
+});
 
 server.listen(PORT, async () => {
   log(`Server running on http://localhost:${PORT}`, "info");
@@ -32,6 +47,11 @@ const shutdown = (signal: string) => {
     log("Server closed", "info");
     process.exit(0);
   });
+  // Force exit after 10 seconds
+  setTimeout(() => {
+    log("Forced exit after timeout", "warn");
+    process.exit(1);
+  }, 10000);
 };
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
