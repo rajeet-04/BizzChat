@@ -1,6 +1,6 @@
 import http from "http";
 import app from "./app";
-import { log } from "./middlewares/logger";
+import { log, logger } from "./middlewares/logger";
 import { env } from "./config/env";
 import { initSocketServer } from "./services/socketService";
 import { autoReconnectSessions } from "./services/whatsappService";
@@ -15,7 +15,7 @@ let errorCount = 0;
 const MAX_ERRORS_BEFORE_RESTART = 10;
 
 process.on("uncaughtException", (err) => {
-  log({ err }, "FATAL: Uncaught exception", "error");
+  logger.error({ err }, "FATAL: Uncaught exception");
   errorCount++;
   if (errorCount >= MAX_ERRORS_BEFORE_RESTART) {
     log("Too many errors, exiting for restart by PM2", "error");
@@ -24,7 +24,7 @@ process.on("uncaughtException", (err) => {
 });
 
 process.on("unhandledRejection", (reason) => {
-  log({ reason }, "Unhandled rejection", "error");
+  logger.error({ reason }, "Unhandled rejection");
   errorCount++;
 });
 
