@@ -9,13 +9,13 @@
  *   pnpm run pm2:stop         # Stop all processes
  */
 
-module.exports = {
+export default {
   apps: [
     {
       name: "bizchat-backend",
       script: "./dist/index.js",
       instances: 1,
-      exec_mode: "cluster",
+      exec_mode: "fork",  // Changed from "cluster" to "fork" for better stability
       
       // Auto-restart on crash
       autorestart: true,
