@@ -46,6 +46,8 @@ export const generateInvoiceData = (
   const year = date.getFullYear();
   const seqStr = String(invoiceSequence).padStart(3, '0');
   const invoice_number = `INV-${year}-${seqStr}`;
+  const customer_name =
+    order.customer_name?.trim() || order.customer_phone?.trim() || "Customer";
 
   // Precision-safe math using Decimal.js (avoids IEEE 754 float errors)
   let subtotal = new Decimal(0);
@@ -86,7 +88,7 @@ export const generateInvoiceData = (
   return {
     invoice_number,
     date: dateStr,
-    customer_name: order.customer_name || order.customer_phone || null,
+    customer_name,
     items: invoiceItems,
     subtotal: subtotal.toNumber(),
     cgst: cgst.toNumber(),
