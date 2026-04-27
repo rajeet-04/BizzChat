@@ -39,6 +39,15 @@ interface MessageBuffer {
 }
 
 const messageBuffers = new Map<string, MessageBuffer>();
+let cleanupInProgress = false;
+
+const CHROMIUM_CACHE_DIR_NAMES = new Set([
+  "Cache",
+  "Code Cache",
+  "GPUCache",
+  "Service Worker",
+  "blob_storage",
+]);
 
 // Store active sessions in memory
 export const sessions = new Map<string, WASession>();
@@ -93,14 +102,33 @@ function clearChromiumLocks(orgId: string): void {
  * This runs every 30 minutes to ensure the Railway 500MB volume doesn't fill up.
  */
 export async function cleanupChromiumCache(): Promise<void> {
+  if (cleanupInProgress) {
+    return;
+  }
+
+  cleanupInProgress = true;
   const authDataPath = process.env.NODE_ENV === "production" ? "/app/backend/.wwebjs_auth" : ".wwebjs_auth";
 
   try {
     // 1. NUCLEAR CLEANUP: If volume is 95% full, we need to delete EVERYTHING that isn't a session secret
     // We keep 'session-X' folders but delete their internal 'Cache', 'Media', etc.
     if (fs.existsSync(authDataPath)) {
-      // Delete all top-level files and transient folders
-      execSync(`find "${authDataPath}" -maxdepth 2 -type d \( -name "Cache" -o -name "Code Cache" -o -name "GPUCache" -o -name "Service Worker" -o -name "blob_storage" \) -exec rm -rf {} + 2>/dev/null`);
+      // Delete transient Chromium cache dirs without shell-dependent `find (...)` syntax.
+      const walkAndDeleteCaches = (dirPath: string, depth: number): void => {
+        if (depth > 2) return;
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const fullPath = path.join(dirPath, entry.name);
+          if (CHROMIUM_CACHE_DIR_NAMES.has(entry.name)) {
+            fs.rmSync(fullPath, { recursive: true, force: true });
+            continue;
+          }
+          walkAndDeleteCaches(fullPath, depth + 1);
+        }
+      };
+
+      walkAndDeleteCaches(authDataPath, 0);
       
       // Delete old session folders that are no longer active
       const files = fs.readdirSync(authDataPath);
@@ -127,6 +155,8 @@ export async function cleanupChromiumCache(): Promise<void> {
     log("Agressive storage purge completed.", "info");
   } catch (err) {
     logError("Storage cleanup failed", err);
+  } finally {
+    cleanupInProgress = false;
   }
 }
 
@@ -180,7 +210,9 @@ export async function autoReconnectSessions(): Promise<void> {
     const dirs = fs.readdirSync(authDataPath);
     const sessionIds = dirs
       .filter(d => d.startsWith("session-"))
-      .map(d => d.replace("session-", ""));
+      .map(d => d.replace("session-", ""))
+      // Pending IDs are short-lived pre-linking sessions and should never be auto-reconnected.
+      .filter(orgId => !orgId.startsWith("pending-"));
 
     log(`Found ${sessionIds.length} saved WhatsApp sessions. Reconnecting...`, "info");
     
