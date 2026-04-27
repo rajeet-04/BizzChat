@@ -45,3 +45,10 @@ export function initSocketServer(httpServer: HttpServer) {
 
   log("Socket.io server initialised", "info");
 }
+
+export async function closeSocketServer(): Promise<void> {
+  if (!io) return;
+  await new Promise<void>((resolve) => {
+    io.close(() => resolve());
+  });
+}

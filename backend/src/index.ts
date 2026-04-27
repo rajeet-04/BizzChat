@@ -2,31 +2,62 @@ import http from "http";
 import app from "./app.js";
 import { log, logger } from "./middlewares/logger.js";
 import { env } from "./config/env.js";
-import { initSocketServer } from "./services/socketService.js";
+import { closeSocketServer, initSocketServer } from "./services/socketService.js";
 import { autoReconnectSessions } from "./services/whatsappService.js";
 
 const PORT = env.PORT;
 
+type RuntimeState = typeof globalThis & {
+  __bizchatServer?: http.Server;
+  __bizchatErrorCount?: number;
+  __bizchatProcessHandlersBound?: boolean;
+};
+
+const runtime = globalThis as RuntimeState;
+
+async function closePreviousRuntime(): Promise<void> {
+  if (!runtime.__bizchatServer) return;
+
+  try {
+    await closeSocketServer();
+  } catch (_) {
+    // Ignore socket teardown errors during hot-reload.
+  }
+
+  await new Promise<void>((resolve) => {
+    try {
+      runtime.__bizchatServer?.close(() => resolve());
+    } catch (_) {
+      resolve();
+    }
+  });
+}
+
+await closePreviousRuntime();
+
 const server = http.createServer(app);
 initSocketServer(server);
+runtime.__bizchatServer = server;
 
 // Track unhandled errors to restart if needed
-let errorCount = 0;
 const MAX_ERRORS_BEFORE_RESTART = 10;
+runtime.__bizchatErrorCount ??= 0;
 
-process.on("uncaughtException", (err) => {
-  logger.error({ err }, "FATAL: Uncaught exception");
-  errorCount++;
-  if (errorCount >= MAX_ERRORS_BEFORE_RESTART) {
-    log("Too many errors, exiting for restart by PM2", "error");
-    process.exit(1);
-  }
-});
+if (!runtime.__bizchatProcessHandlersBound) {
+  process.on("uncaughtException", (err) => {
+    logger.error({ err }, "FATAL: Uncaught exception");
+    runtime.__bizchatErrorCount = (runtime.__bizchatErrorCount ?? 0) + 1;
+    if ((runtime.__bizchatErrorCount ?? 0) >= MAX_ERRORS_BEFORE_RESTART) {
+      log("Too many errors, exiting for restart by PM2", "error");
+      process.exit(1);
+    }
+  });
 
-process.on("unhandledRejection", (reason) => {
-  logger.error({ reason }, "Unhandled rejection");
-  errorCount++;
-});
+  process.on("unhandledRejection", (reason) => {
+    logger.error({ reason }, "Unhandled rejection");
+    runtime.__bizchatErrorCount = (runtime.__bizchatErrorCount ?? 0) + 1;
+  });
+}
 
 server.listen(PORT, async () => {
   log(`Server running on http://localhost:${PORT}`, "info");
@@ -43,7 +74,7 @@ server.listen(PORT, async () => {
 
 const shutdown = (signal: string) => {
   log(`${signal} received. Shutting down API...`, "info");
-  server.close(() => {
+  runtime.__bizchatServer?.close(() => {
     log("Server closed", "info");
     process.exit(0);
   });
@@ -54,5 +85,8 @@ const shutdown = (signal: string) => {
   }, 10000);
 };
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+if (!runtime.__bizchatProcessHandlersBound) {
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  runtime.__bizchatProcessHandlersBound = true;
+}
