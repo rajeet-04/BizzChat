@@ -148,9 +148,18 @@ export async function cleanupChromiumCache(): Promise<void> {
       }
     }
 
-    // 2. Clear Puppeteer temp profiles
-    execSync('rm -rf /tmp/puppeteer_dev_profile-* 2>/dev/null');
-    execSync('rm -rf /tmp/chromium-cache-* 2>/dev/null');
+    // 2. Clear Puppeteer temp profiles (cross-platform)
+    if (process.platform === "win32") {
+      try {
+        execSync('powershell -NoProfile -Command "Remove-Item -Path $env:TEMP\\puppeteer_dev_profile-* -Recurse -Force -ErrorAction SilentlyContinue"');
+      } catch (_) {}
+      try {
+        execSync('powershell -NoProfile -Command "Remove-Item -Path $env:TEMP\\chromium-cache-* -Recurse -Force -ErrorAction SilentlyContinue"');
+      } catch (_) {}
+    } else {
+      execSync('rm -rf /tmp/puppeteer_dev_profile-* 2>/dev/null; true');
+      execSync('rm -rf /tmp/chromium-cache-* 2>/dev/null; true');
+    }
 
     log("Agressive storage purge completed.", "info");
   } catch (err) {
