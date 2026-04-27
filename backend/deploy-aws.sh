@@ -2,7 +2,7 @@
 # One-command AWS deployment script for BizChat backend
 # Copy this entire command and paste into your AWS Lightsail terminal
 
-set -e
+set -euo pipefail
 
 echo "🚀 BizChat Backend - AWS Deployment"
 echo "===================================="
@@ -31,7 +31,10 @@ pm2 start dist/index.js --name bizchat-backend --max-memory-restart 512M
 
 # Save PM2 config
 pm2 save
-sudo pm2 startup
+sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u ubuntu --hp /home/ubuntu
+
+# Clear old PM2 logs so verification reflects this deployment only
+pm2 flush || true
 
 # Verify
 echo ""
@@ -40,8 +43,8 @@ echo ""
 echo "Status:"
 pm2 status
 echo ""
-echo "Logs (last 10 lines):"
-pm2 logs --lines 10
+echo "Logs (last 30 lines, non-streaming):"
+pm2 logs bizchat-backend --lines 30 --nostream
 echo ""
 echo "Testing health endpoint:"
 sleep 1
