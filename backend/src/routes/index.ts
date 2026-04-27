@@ -593,6 +593,7 @@ router.get("/inventory", generalLimiter, requireOrg, async (req, res, next) => {
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 router.post("/orders/invoice", generalLimiter, invoiceController.generateInvoice);
 router.get("/orders/:id/download", generalLimiter, requireOrg, invoiceController.downloadInvoice);
+router.post("/orders/:id/share-whatsapp", generalLimiter, requireOrg, invoiceController.shareInvoiceOnWhatsApp);
 
 // ─── Write operations ─────────────────────────────────────────────────────────
 router.post("/extract", extractLimiter, requireOrg, idempotency, sanitizeInputs, orderController.extractOrder);

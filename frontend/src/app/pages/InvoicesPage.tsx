@@ -3,7 +3,7 @@ import {
   FileText, Eye, MessageCircle, IndianRupee, Receipt,
   Download, X, CheckCircle2, Leaf, Loader2, Printer,
 } from "lucide-react";
-import { useOrders } from "@/hooks/useApi";
+import { useApiClient, useOrders } from "@/hooks/useApi";
 import { formatINR, formatDateOnly } from "@/lib/format";
 import type { Order, Invoice } from "@/lib/types";
 
@@ -76,8 +76,10 @@ function PDFPreviewPanel({
   inv: InvoiceRow;
   onClose: () => void;
 }) {
+  const client = useApiClient();
   const printRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   /* ── Download PDF by printing ── */
@@ -128,29 +130,37 @@ function PDFPreviewPanel({
   };
 
   /* ── Share on WhatsApp ── */
-  const handleWhatsApp = () => {
-    const phone = inv.customerPhone?.replace(/\D/g, "") ?? "";
-    const lines = [
-      `🧾 *Invoice: ${inv.invoiceNo}*`,
-      `📅 Date: ${inv.date}`,
-      `👤 Customer: ${inv.customerName ?? "Valued Customer"}`,
-      ``,
-      ...inv.invoice.items.map(
-        (it) =>
-          `• ${it.product_name} × ${it.quantity} = ${formatINR(it.amount)}`
-      ),
-      ``,
-      `Subtotal: ${formatINR(inv.invoice.subtotal)}`,
-      `GST: ${formatINR(inv.invoice.cgst + inv.invoice.sgst)}`,
-      `*Grand Total: ${formatINR(inv.invoice.total)}*`,
-      ``,
-      `Thank you for your order! 🙏`,
-    ].join("\n");
+  const normalizeCustomerPhone = (rawPhone: string): string => {
+    let normalized = rawPhone.replace(/\D/g, "");
+    if (normalized.startsWith("0") && normalized.length === 11) {
+      normalized = normalized.slice(1);
+    }
+    if (normalized.length === 10) {
+      normalized = `91${normalized}`;
+    }
+    return normalized;
+  };
 
-    const url = phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(lines)}`
-      : `https://wa.me/?text=${encodeURIComponent(lines)}`;
-    window.open(url, "_blank");
+  const handleWhatsApp = async () => {
+    const customerPhone = inv.customerPhone ?? "";
+    const normalizedPhone = normalizeCustomerPhone(customerPhone);
+
+    if (!normalizedPhone) {
+      window.alert("Customer phone number is missing for this invoice.");
+      return;
+    }
+
+    setSharing(true);
+    try {
+      await client.shareInvoiceOnWhatsApp(inv.orderId, normalizedPhone);
+      window.open(`https://wa.me/${normalizedPhone}`, "_blank");
+    } catch (err) {
+      console.error("Failed to share invoice on WhatsApp:", err);
+      window.alert("Could not send PDF via WhatsApp. Please ensure WhatsApp is connected and try again.");
+      window.open(`https://wa.me/${normalizedPhone}`, "_blank");
+    } finally {
+      setSharing(false);
+    }
   };
 
   const iv = inv.invoice;
@@ -333,10 +343,11 @@ function PDFPreviewPanel({
       <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-[#111827] p-6 pb-8 border-t border-gray-800' : 'flex items-center gap-2 px-5 py-3.5 shrink-0 border-t border-gray-200'}`}>
         <button
           onClick={handleWhatsApp}
+          disabled={sharing}
           className="w-full flex items-center justify-center gap-2.5 py-4 text-sm font-bold bg-[#22C55E] text-white rounded-xl mb-3 active:scale-95 transition-transform"
         >
-          <MessageCircle size={18} />
-          Share Invoice
+          {sharing ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
+          {sharing ? "Sending PDF..." : "Share Invoice"}
         </button>
         <button
           onClick={handleDownload}

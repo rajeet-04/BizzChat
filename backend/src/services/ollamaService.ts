@@ -22,8 +22,9 @@ function countTokens(text: string): number {
 const OLLAMA_HOST = env.OLLAMA_HOST; // from .env: https://ollama.com
 const OLLAMA_API_KEY = env.OLLAMA_API_KEY ?? "";
 
-// Fail fast: cloud endpoint requires an API key
-if (OLLAMA_HOST.includes("ollama.com") && !OLLAMA_API_KEY) {
+// Fail fast only in production. In local dev, allow startup so engineers can run
+// UI/socket flows without cloud credentials.
+if (env.NODE_ENV === "production" && OLLAMA_HOST.includes("ollama.com") && !OLLAMA_API_KEY) {
   throw new Error(
     "OLLAMA_API_KEY is not set. Set it in Railway → Variables (or your .env file) to use Ollama Cloud."
   );

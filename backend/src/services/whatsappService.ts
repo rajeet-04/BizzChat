@@ -2,7 +2,7 @@
 // In Node.js ESM, CJS modules must be imported as default then destructured.
 import wwebjs from "whatsapp-web.js";
 import type { Client as WWebClient } from "whatsapp-web.js";
-const { Client, LocalAuth } = wwebjs;
+const { Client, LocalAuth, MessageMedia } = wwebjs;
 import puppeteerPkg from "puppeteer";
 const puppeteer = puppeteerPkg;
 import { getIO } from "./socketService";
@@ -477,4 +477,43 @@ export async function disconnectWhatsApp(orgId: string): Promise<void> {
   } catch (err) {
     logError(`Error deleting session files for ${orgId}: ${err}`, "whatsapp");
   }
+}
+
+function normalizePhoneForWhatsApp(rawPhone: string): string {
+  let normalized = rawPhone.replace(/\D/g, "");
+  if (normalized.startsWith("0") && normalized.length === 11) {
+    normalized = normalized.slice(1);
+  }
+  if (normalized.length === 10) {
+    normalized = `91${normalized}`;
+  }
+  return normalized;
+}
+
+export async function sendInvoicePdf(
+  orgId: string,
+  customerPhone: string,
+  pdfBuffer: Buffer,
+  fileName: string,
+  caption?: string,
+): Promise<{ chatId: string; phone: string }> {
+  const session = sessions.get(orgId);
+  if (!session || session.status !== "connected") {
+    throw new Error("WhatsApp is not connected for this organization");
+  }
+
+  const normalizedPhone = normalizePhoneForWhatsApp(customerPhone);
+  if (normalizedPhone.length < 10) {
+    throw new Error("Invalid customer phone number");
+  }
+
+  const chatId = `${normalizedPhone}@c.us`;
+  const media = new MessageMedia("application/pdf", pdfBuffer.toString("base64"), fileName);
+
+  await session.client.sendMessage(chatId, media, {
+    sendMediaAsDocument: true,
+    caption,
+  } as any);
+
+  return { chatId, phone: normalizedPhone };
 }

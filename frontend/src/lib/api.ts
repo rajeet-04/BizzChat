@@ -184,6 +184,12 @@ export class ApiClient {
       body: JSON.stringify({ orderId }),
     });
 
+  shareInvoiceOnWhatsApp = (orderId: string, phone?: string) =>
+    this.request<{ message: string; phone: string }>(`/api/orders/${orderId}/share-whatsapp`, {
+      method: "POST",
+      body: JSON.stringify(phone ? { phone } : {}),
+    });
+
   /** Returns a redirect URL for the signed PDF. Open in a new tab. */
   getInvoiceDownloadUrl = (orderId: string) =>
     `/api/orders/${orderId}/download`;

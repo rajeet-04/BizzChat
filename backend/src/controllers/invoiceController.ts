@@ -2,12 +2,17 @@ import { Request, Response } from "express";
 import { generateInvoiceData } from "../services/invoiceService";
 import { storage } from "../services/storageService";
 import { pdfService } from "../services/pdfService";
+import { sendInvoicePdf } from "../services/whatsappService";
 import { asyncHandler, AppError } from "../middlewares/errorHandler";
 
 import { z } from "zod";
 
 const generateInvoiceSchema = z.object({
   orderId: z.string().min(1, "Order ID is required"),
+});
+
+const shareInvoiceWhatsAppSchema = z.object({
+  phone: z.string().min(8).optional(),
 });
 
 export const generateInvoice = asyncHandler(async (req: Request, res: Response) => {
@@ -76,4 +81,45 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
   const signedUrl = await pdfService.generateDownloadUrl(fileName, 5);
 
   res.redirect(signedUrl);
+});
+
+/**
+ * POST /api/orders/:id/share-whatsapp
+ *
+ * Sends invoice as a real PDF document to customer's WhatsApp number.
+ */
+export const shareInvoiceOnWhatsApp = asyncHandler(async (req: Request, res: Response) => {
+  const orderId = req.params.id as string;
+  const orgId = req.orgId!;
+  const parsed = shareInvoiceWhatsAppSchema.parse(req.body ?? {});
+
+  const order = await storage.getChatOrder(orgId, orderId);
+  if (!order) {
+    throw new AppError("Order not found", 404);
+  }
+
+  if (!order.invoice) {
+    throw new AppError("No invoice generated for this order", 400);
+  }
+
+  const targetPhone = parsed.phone ?? order.customer_phone ?? "";
+  if (!targetPhone) {
+    throw new AppError("Customer phone number is missing", 400);
+  }
+
+  const pdfBuffer = await pdfService.generateInvoicePDF(order.invoice);
+  const fileName = `invoice_${order.invoice.invoice_number}.pdf`;
+
+  const sent = await sendInvoicePdf(
+    orgId,
+    targetPhone,
+    pdfBuffer,
+    fileName,
+    `Invoice ${order.invoice.invoice_number} from ${order.invoice.business_name}`,
+  );
+
+  res.status(200).json({
+    message: "Invoice PDF sent successfully on WhatsApp",
+    phone: sent.phone,
+  });
 });

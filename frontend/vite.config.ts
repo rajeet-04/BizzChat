@@ -3,6 +3,8 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
+const DEV_BACKEND_URL = process.env.VITE_DEV_BACKEND_URL || 'http://localhost:3000'
+
 export default defineConfig({
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
@@ -21,11 +23,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://52.66.154.194:3000',
+        target: DEV_BACKEND_URL,
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://52.66.154.194:3000',
+        target: DEV_BACKEND_URL,
         changeOrigin: true,
         ws: true,
       },
