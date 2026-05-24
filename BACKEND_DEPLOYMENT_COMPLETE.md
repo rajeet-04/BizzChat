@@ -9,7 +9,7 @@ All code fixes have been implemented, compiled, tested, and verified. The backen
 ## What Was Fixed
 
 ### 1. AWS Health Endpoint Constant Failures
-- **Problem**: `http://52.66.154.194:3000/api/health` timing out and returning 500 errors
+- **Problem**: `http://20.205.47.92:3000/api/health` timing out and returning 500 errors
 - **Root Cause**: Endpoint was writing to Firestore database on every check (excessive I/O)
 - **Solution**: Redesigned endpoint to be lightweight with strict 5-second timeout
 - **Result**: Returns HTTP 200 in <1 second, never fails, never hangs

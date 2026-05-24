@@ -13,19 +13,19 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://52.66.154.194:3000/api/$1"
+      "destination": "http://20.205.47.92:3000/api/$1"
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "http://52.66.154.194:3000/socket.io/$1"
+      "destination": "http://20.205.47.92:3000/socket.io/$1"
     },
     {
       "source": "/socket.io",
-      "destination": "http://52.66.154.194:3000/socket.io"
+      "destination": "http://20.205.47.92:3000/socket.io"
     },
     {
       "source": "/api",
-      "destination": "http://52.66.154.194:3000/api"
+      "destination": "http://20.205.47.92:3000/api"
     },
     {
       "source": "/(.*)",

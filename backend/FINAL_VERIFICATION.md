@@ -9,7 +9,7 @@ All code changes have been implemented, compiled, tested, and verified. The back
 ## ✅ What Has Been Fixed
 
 ### 1. Health Endpoint (AWS Lightsail Stability)
-**Problem**: `http://52.66.154.194:3000/api/health` constantly failing with timeouts  
+**Problem**: `http://20.205.47.92:3000/api/health` constantly failing with timeouts  
 **Solution**: 
 - Removed Firestore database writes (caused excessive load)
 - Added strict 5-second timeout with Promise.race()
@@ -41,7 +41,7 @@ All code changes have been implemented, compiled, tested, and verified. The back
 **Problem**: HTTPS Vercel frontend can't connect to HTTP backend (browser blocks it)  
 **Solution**:
 - Frontend Socket.IO uses `window.location.origin` (Vercel HTTPS URL)
-- Vercel proxies `/socket.io/*` to backend at http://52.66.154.194:3000
+- Vercel proxies `/socket.io/*` to backend at http://20.205.47.92:3000
 - All WebSocket traffic tunnels through HTTPS from browser perspective
 - CORS configured for Vercel domain
 **Result**: No mixed-content errors, Socket.IO connects successfully

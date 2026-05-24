@@ -49,6 +49,6 @@ timeout /t 1
 curl http://localhost:3000/api/health
 echo.
 echo [+] Backend is running on http://localhost:3000
-echo [+] On AWS: http://52.66.154.194:3000
+echo [+] On AWS: http://20.205.47.92:3000/
 echo.
 pause

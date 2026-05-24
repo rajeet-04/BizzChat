@@ -108,7 +108,7 @@ pm2 stop all
 
 ## Health Check Endpoint
 
-**Endpoint:** `http://52.66.154.194:3000/api/health`
+**Endpoint:** `http://20.205.47.92:3000/api/health`
 
 The health endpoint now:
 - ✅ Returns 200 with `status: "ok"` if healthy
@@ -186,5 +186,5 @@ sudo systemctl restart nginx
 
 1. ✅ Build: `cd backend && pnpm run build`
 2. ✅ Deploy: `pnpm run start:pm2`
-3. ✅ Test: `curl http://52.66.154.194:3000/api/health`
+3. ✅ Test: `curl http://20.205.47.92:3000/api/health`
 4. ✅ Monitor: `pm2 logs`

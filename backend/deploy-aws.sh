@@ -50,4 +50,4 @@ echo "Testing health endpoint:"
 sleep 1
 curl http://localhost:3000/api/health || echo "Health check failed"
 echo ""
-echo "🎉 Backend is running on http://52.66.154.194:3000"
+echo "🎉 Backend is running on http://20.205.47.92:3000"
