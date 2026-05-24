@@ -1,6 +1,5 @@
 #!/bin/bash
 # One-command AWS deployment script for BizChat backend
-# Copy this entire command and paste into your AWS Lightsail terminal
 
 set -euo pipefail
 
@@ -16,11 +15,11 @@ pm2 kill || true
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-pnpm install
+bun install
 
 # Build
 echo "🔨 Building backend..."
-pnpm run build
+bun run build
 
 # Create logs directory
 mkdir -p logs
@@ -40,14 +39,18 @@ pm2 flush || true
 echo ""
 echo "✅ Deployment complete!"
 echo ""
+
 echo "Status:"
 pm2 status
+
 echo ""
 echo "Logs (last 30 lines, non-streaming):"
 pm2 logs bizchat-backend --lines 30 --nostream
+
 echo ""
 echo "Testing health endpoint:"
 sleep 1
 curl http://localhost:3000/api/health || echo "Health check failed"
+
 echo ""
 echo "🎉 Backend is running on http://20.205.47.92:3000"
